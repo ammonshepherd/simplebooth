@@ -22,16 +22,17 @@ def take_pics():
   try:
     # Format the folder name as "YYYY-MM-DD-HH-MM-SS"
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    folder_path = Path(f'{str(BOOTH_IMAGE_PATH)}/{timestamp}').mkdir()
+    Path(f'{str(BOOTH_IMAGE_PATH)}/{timestamp}').mkdir()
+    folder_path = Path(f'{str(BOOTH_IMAGE_PATH)}/{str(timestamp)}')
     print("3")
     time.sleep(1)
-    the_camera.capture(f'{folder_path}/{timestamp}_1')
+    the_camera.capture(f'{folder_path}/{timestamp}_1.jpg')
     print("2")
     time.sleep(1)
-    the_camera.capture(f'{folder_path}/{timestamp}_2')
+    the_camera.capture(f'{folder_path}/{timestamp}_2.jpg')
     print("1")
     time.sleep(1)
-    the_camera.capture(f'{folder_path}/{timestamp}_3')
+    the_camera.capture(f'{folder_path}/{timestamp}_3.jpg')
   except FileExistsError:
     print("ERROR: Folder path already exists")
     print(FileExistsError)
