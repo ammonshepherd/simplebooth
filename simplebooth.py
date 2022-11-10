@@ -13,8 +13,15 @@ HOME = Path.home()
 BOOTH_IMAGE_PATH = Path(f'{str(HOME)}/Pictures/booth_pics')
 BUTTON_PIN = 2
 
+TEXT_BOX_1 = "Make it a GREAT day!"
+TEXT_BOX_2 = "Scholars' Lab TinkerTank"
+
+COUNT3 = Image.open('./count_down/3.png')
+COUNT2 = Image.open('./count_down/2.png')
+COUNT1 = Image.open('./count_down/1.png')
+
 # Set up button and camera objects
-the_button = Button(BUTTON_PIN)
+#the_button = Button(BUTTON_PIN)
 the_camera = PiCamera()
 
 # Check for base image folder, create if doesn't exist
@@ -25,36 +32,39 @@ def check_image_folder(BOOTH_IMAGE_PATH):
   else:
     Path(f'{str(BOOTH_IMAGE_PATH)}').mkdir()
 
+# Show Controls
+# - show text/image to click button to take a pictures
+
 
 # Take the pictures
 # Returns the path to the directory where photos are stored
 def take_pics():
-  try:
-    # Make a folder to store the photos of this session
-    # Format the folder name as "YYYY-MM-DD-HH-MM-SS"
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    Path(f'{str(BOOTH_IMAGE_PATH)}/{timestamp}').mkdir()
-    folder_path = Path(f'{str(BOOTH_IMAGE_PATH)}/{str(timestamp)}')
+  # Make a folder to store the photos of this session
+  # Format the folder name as "YYYY-MM-DD-HH-MM-SS"
+  timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+  Path(f'{str(BOOTH_IMAGE_PATH)}/{timestamp}').mkdir()
+  folder_path = Path(f'{str(BOOTH_IMAGE_PATH)}/{str(timestamp)}')
 
-    for i in range(1,3):
-      the_camera.start_preview()
-      the_camera.annotate_text = '3'
+  for i in range(1,4):
+    the_camera.start_preview()
+    for n in range(3,0,-1):
+      img = Image.open(f'./count_down/{n}.png')
+      pad = Image.new('RGBA', (
+          ((img.size[0] + 31) // 32) * 32,
+          ((img.size[1] + 15) // 16) * 16,
+          ))
+      pad.paste(img, (0, 0))
+      o = the_camera.add_overlay(pad.tobytes(), size=img.size)
+      o.alpha = 32
+      o.layer = 3
       time.sleep(1)
-      the_camera.annotate_text = '2'
-      time.sleep(1)
-      the_camera.annotate_text = '1'
-      time.sleep(1)
-      the_camera.capture(f'{folder_path}/{timestamp}_{i}.jpg')
-      the_camera.stop_preview()
+      the_camera.remove_overlay(o)
+    the_camera.capture(f'{folder_path}/{timestamp}_{i}.jpg')
+    the_camera.stop_preview()
 
-  except FileExistsError:
-    print("ERROR: Folder path already exists")
-    print(FileExistsError)
-    pass
   return folder_path
 
-# Show Controls
-# - show text/image to click button to take a pictures
+take_pics()
 
 # Make photobooth image
 # - make a new image using the 3 pictures taken
