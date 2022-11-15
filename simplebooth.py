@@ -53,6 +53,7 @@ def take_pics():
 
   for i in range(1,4):
     #the_camera.start_preview(resolution=(1024,768))
+    # native resolution on the pi connected to printer is 1120x840
     the_camera.start_preview()
     for n in range(3,0,-1):
       img = Image.open(f'./count_down/{n}.png')
