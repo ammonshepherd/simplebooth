@@ -52,7 +52,8 @@ def take_pics():
   image_list = []
 
   for i in range(1,4):
-    the_camera.start_preview(resolution=(1024,768))
+    #the_camera.start_preview(resolution=(1024,768))
+    the_camera.start_preview()
     for n in range(3,0,-1):
       img = Image.open(f'./count_down/{n}.png')
       pad = Image.new('RGBA', (
@@ -77,7 +78,7 @@ def take_pics():
 # - make a new image using the 3 pictures taken
 def make_booth_image(images):
   folder_path = Path(images[0]).parent
-  booth_image = Image.new('RGB', (1200, 3600), (230,230,230))
+  booth_image = Image.new('RGB', (1200, 3600), (255,255,255))
   x, y = 40, 40
   for img in images:
     new_img = Image.open(img)
@@ -86,7 +87,7 @@ def make_booth_image(images):
   # Add the main, big text box
   fnt1 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 210)
   text_1 = ImageDraw.Draw(booth_image)
-  text_1.multiline_text((40, 2680), "Lighting\n of the Lawn\n 2022!", font=fnt1, fill=(35, 45, 75), spacing=20, align="center", stroke_width=4, stroke_fill=(229,114,0))
+  text_1.multiline_text((40, 2680), "Lighting\n of the Lawn\n 2022!", font=fnt1, fill=(35, 45, 75), spacing=20, align="center", stroke_width=8, stroke_fill=(229,114,0))
 
   # add the smaller text
   fnt2 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 90)
@@ -126,7 +127,6 @@ def print_booth_image(printable_image):
   print('Return Code: ', output.returncode)
   print('Output: ', output.stdout.decode("utf-8"))
   
-# print_booth_image(print_it)
 
 
 
@@ -134,7 +134,7 @@ def button_pressed():
   images = take_pics()
   booth_image = make_booth_image(images)
   print_it = printable_image(booth_image)
-  # print_booth_image(print_it)
+  print_booth_image(print_it)
 
 # The main running code
 # the_button.when_pressed = button_pressed()
