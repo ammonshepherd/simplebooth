@@ -13,12 +13,8 @@ HOME = Path.home()
 BOOTH_IMAGE_PATH = Path(f'{str(HOME)}/Pictures/booth_pics')
 BUTTON_PIN = 2
 
-TEXT_BOX_1 = "Make it a GREAT day!"
+TEXT_BOX_1 = "Lighting\n of the Lawn\n 2022!"
 TEXT_BOX_2 = "Scholars' Lab TinkerTank"
-
-COUNT3 = Image.open('./count_down/3.png')
-COUNT2 = Image.open('./count_down/2.png')
-COUNT1 = Image.open('./count_down/1.png')
 
 # Set up button and camera objects
 #the_button = Button(BUTTON_PIN)
@@ -88,12 +84,12 @@ def make_booth_image(images):
   # Add the main, big text box
   fnt1 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 210)
   text_1 = ImageDraw.Draw(booth_image)
-  text_1.multiline_text((40, 2680), "Lighting\n of the Lawn\n 2022!", font=fnt1, fill=(35, 45, 75), spacing=20, align="center", stroke_width=8, stroke_fill=(229,114,0))
+  text_1.multiline_text((40, 2680), TEXT_BOX_1, font=fnt1, fill=(35, 45, 75), spacing=20, align="center", stroke_width=8, stroke_fill=(229,114,0))
 
   # add the smaller text
   fnt2 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 90)
   text_2 = ImageDraw.Draw(booth_image)
-  text_2.multiline_text((40, 3420), "Scholars' Lab TinkerTank", font=fnt2, fill=(248, 76, 30), align="center")
+  text_2.multiline_text((40, 3420), TEXT_BOX_2, font=fnt2, fill=(248, 76, 30), align="center")
 
   booth_image.save(f'{folder_path}/booth_image.jpg')
   return f'{folder_path}/booth_image.jpg'
