@@ -2,7 +2,7 @@ import time
 import subprocess
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-from gpiozero import Button
+from gpiozero import Button, LED
 from picamera import PiCamera
 from datetime import datetime
 from signal import pause
@@ -11,14 +11,23 @@ from signal import pause
 # The base image folder should be ~/Pictures/booth_pics/
 HOME = Path.home()
 BOOTH_IMAGE_PATH = Path(f'{str(HOME)}/Pictures/booth_pics')
-BUTTON_PIN = 2
 
-TEXT_BOX_1 = "Lighting\n of the Lawn\n 2022!"
+# Pinout https://pinout.xyz
+# purple wire (switch) to physical/board pin 7
+# black wire (both ground) to physical/board pin 9
+# blue wire (LED) to physical/board pin 11
+BUTTON_PIN = 4
+LED_PIN = 17
+
+TEXT_BOX_1 = "Lighting\n of the Lawn\n 2022"
 TEXT_BOX_2 = "Scholars' Lab TinkerTank"
 
+PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
+
 # Set up button and camera objects
-#the_button = Button(BUTTON_PIN)
-the_camera = PiCamera()
+blue_button = Button(BUTTON_PIN)
+blue_led = LED(LED_PIN)
+camera = PiCamera()
 
 # Check for base image folder, create if doesn't exist
 # Run this at start up of the script
@@ -28,7 +37,6 @@ def check_image_folder():
   else:
     Path(f'{str(BOOTH_IMAGE_PATH)}').mkdir()
 
-check_image_folder()
 
 
 # Show Controls
@@ -46,7 +54,6 @@ def take_pics():
   folder_path = Path(f'{str(BOOTH_IMAGE_PATH)}/{str(timestamp)}')
 
   image_list = []
-  the_camera.start_preview()
 
   for i in range(1,4):
     for n in range(3,0,-1):
@@ -56,14 +63,13 @@ def take_pics():
           ((img.size[1] + 15) // 16) * 16,
           ))
       pad.paste(img, (0, 0))
-      o = the_camera.add_overlay(pad.tobytes(), size=img.size)
+      o = camera.add_overlay(pad.tobytes(), size=img.size)
       o.alpha = 32
       o.layer = 3
       time.sleep(1)
-      the_camera.remove_overlay(o)
-    the_camera.capture(f'{folder_path}/{timestamp}_{i}.jpg', resize=(1120, 840))
+      camera.remove_overlay(o)
+    camera.capture(f'{folder_path}/{timestamp}_{i}.jpg', resize=(1120, 840))
     image_list.append(f'{folder_path}/{timestamp}_{i}.jpg')
-  the_camera.stop_preview()
   return image_list
 
 
@@ -110,6 +116,13 @@ def printable_image(booth_image):
   return print_image
 
 
+# Check that the correct printer is selected. Set it as default if not.
+def printer_check(printer_name):
+    current_default = subprocess.run(["lpstat", "-d"], capture_output=True)
+    if printer_name not in current_default.stdout.decode("utf-8"):
+        subprocess.run(["lpoptions", "-d", printer_name])
+        current_default = printer_name
+    #print(current_default)
 
 
 
@@ -118,20 +131,21 @@ def printable_image(booth_image):
 # - TODO: look into using pycups library
 def print_booth_image(printable_image):
   output = subprocess.run(["lp", printable_image], capture_output=True)
-  print('command: lp')
-  print('Return Code: ', output.returncode)
-  print('Output: ', output.stdout.decode("utf-8"))
   
 
 
 
 def button_pressed():
+  blue_led.off()
   images = take_pics()
   booth_image = make_booth_image(images)
   print_it = printable_image(booth_image)
+  printer_check(PRINTER_NAME)
   print_booth_image(print_it)
+  blue_led.blink()
 
 # The main running code
-# the_button.when_pressed = button_pressed()
-# pause()
-button_pressed()
+camera.start_preview()
+blue_led.blink()
+blue_button.when_pressed = button_pressed
+pause()
