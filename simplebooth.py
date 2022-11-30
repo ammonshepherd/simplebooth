@@ -9,8 +9,8 @@ from signal import pause
 
 # Store the files in the Pictures folder of the users' home directory
 # The base image folder should be ~/Pictures/booth_pics/
-HOME = Path.home()
-BOOTH_IMAGE_PATH = Path(f'{str(HOME)}/Pictures/booth_pics')
+SIMPLEPATH = Path('/home/pi/simplebooth')
+BOOTH_IMAGE_PATH = Path(f'/home/pi/Pictures/booth_pics')
 
 # Pinout https://pinout.xyz
 # purple wire (switch) to physical/board pin 7
@@ -57,7 +57,7 @@ def take_pics():
 
   for i in range(1,4):
     for n in range(3,0,-1):
-      img = Image.open(f'./count_down/{n}.png')
+      img = Image.open(f'{SIMPLEPATH}/count_down/{n}.png')
       pad = Image.new('RGBA', (
           ((img.size[0] + 31) // 32) * 32,
           ((img.size[1] + 15) // 16) * 16,
@@ -116,13 +116,21 @@ def printable_image(booth_image):
   return print_image
 
 
-# Check that the correct printer is selected. Set it as default if not.
+# Set default printer 
+def printer_default(printer_name):
+  # Set the default printer to the one desired
+  current_default = subprocess.run(["lpstat", "-d"], capture_output=True)
+  if printer_name not in current_default.stdout.decode("utf-8"):
+    subprocess.run(["lpoptions", "-d", printer_name])
+    current_default = printer_name
+
 def printer_check(printer_name):
-    current_default = subprocess.run(["lpstat", "-d"], capture_output=True)
-    if printer_name not in current_default.stdout.decode("utf-8"):
-        subprocess.run(["lpoptions", "-d", printer_name])
-        current_default = printer_name
-    #print(current_default)
+  # Check if desired printer is attached
+  attached_printers = subprocess.run(['lpstat', '-p'], capture_output=True)
+  if printer_name in attached_printers.stdout.decode('utf-8'):
+    return True
+  else:
+    return False
 
 
 
@@ -131,6 +139,7 @@ def printer_check(printer_name):
 # - TODO: look into using pycups library
 def print_booth_image(printable_image):
   output = subprocess.run(["lp", printable_image], capture_output=True)
+  return True
   
 
 
