@@ -6,7 +6,17 @@ from gpiozero import Button, LED
 from picamera import PiCamera
 from datetime import datetime
 from signal import pause
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+import qrcode
+import tkinter as tk
 
+
+######################################################################
+#
+#        Config Settings
+#
+######################################################################
 # Store the files in the Pictures folder of the users' home directory
 # The base image folder should be ~/Pictures/booth_pics/
 SIMPLEPATH = Path('/home/pi/simplebooth')
@@ -24,10 +34,40 @@ TEXT_BOX_2 = "Scholars' Lab TinkerTank"
 
 PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
 
+##################### END CONFIG SETTINGS ############################
+
 # Set up button and camera objects
 blue_button = Button(BUTTON_PIN)
 blue_led = LED(LED_PIN)
 camera = PiCamera()
+camera.rotation = 180
+
+
+gauth = GoogleAuth()
+drive = GoogleDrive(gauth)
+
+def upload_image(image_file):
+    gfile = drive.CreateFile({'parents': [{'id': '1FEH74jojf7WPOYk0ILqexKMs-ezGwGnE'}]})
+    # Read file and set it as the content of this instance.
+    gfile.SetContentFile(image_file)
+    gfile.Upload() # Upload the file.
+    return gfile.metadata['webContentLink']
+
+def make_qr(fileUrl):
+    qr = qrcode.make(fileUrl)
+    qr.save(f'{SIMPLEPATH}/qrimage.png')
+    w = tk.Tk()
+    w.attributes('-fullscreen',True) 
+    t = tk.Label(w, text="Scan this code to download your image!", font=("Arial", 55))
+    t.grid(row=2,column=1)
+    img = tk.PhotoImage(file=f'{SIMPLEPATH}/qrimage.png')
+    l = tk.Label(w, image=img)
+    l.grid(row=1,column=1)
+    # Destroy the widget after 30 seconds, the time it takes to print the image
+    w.after(30000, lambda: w.destroy()) 
+    w.mainloop()
+
+
 
 # Check for base image folder, create if doesn't exist
 # Run this at start up of the script
@@ -41,7 +81,14 @@ def check_image_folder():
 
 # Show Controls
 # - show text/image to click button to take a pictures
-
+def show_instructions():
+    win = tk.Tk()
+    win.attributes('-fullscreen',True) 
+    text = tk.Label(win, text="Get ready to take 3 pictures!\nAfterwards, scan the QR code to download your photo!", font=("Arial", 55))
+    text.grid(row=2,column=1)
+    # Destroy the widget after 6 seconds
+    win.after(6000, lambda: win.destroy()) 
+    win.mainloop()
 
 
 # Take the pictures
@@ -145,13 +192,26 @@ def print_booth_image(printable_image):
 
 
 def button_pressed():
+  camera.stop_preview()
+  show_instructions()
+  camera.start_preview()
   blue_led.off()
+
   images = take_pics()
   booth_image = make_booth_image(images)
+
   print_it = printable_image(booth_image)
   printer_check(PRINTER_NAME)
   print_booth_image(print_it)
+
+  fileUrl = upload_image(booth_image)
+  camera.stop_preview()
+  make_qr(fileUrl)
+
+  camera.start_preview()
   blue_led.blink()
+
+
 
 # The main running code
 camera.start_preview()
