@@ -41,6 +41,7 @@ blue_button = Button(BUTTON_PIN)
 blue_led = LED(LED_PIN)
 camera = PiCamera()
 camera.rotation = 180
+camera.hflip = True
 
 
 gauth = GoogleAuth()
