@@ -41,8 +41,11 @@ PRINTER_NAME = "NO PRINT"
 ######################################################################
 # TODO:
 # - Auto format the text to fit in the space without needing new line characters
-# - 
-##
+# - Center text and QR horizontally and vertically in instructions and showing QR code
+# - Don't show the dekstop when switching between instructions and camera preview
+#   - maybe use Tkinter for all of it?
+# - Sleep if inactive for 30 seconds. 
+# - Standby mode. Push button to start program.
 ######################################################################
 
 
