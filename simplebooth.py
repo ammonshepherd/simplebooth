@@ -30,18 +30,25 @@ BOOTH_IMAGE_PATH = Path(f'/home/pi/Pictures/booth_pics')
 BUTTON_PIN = 4
 LED_PIN = 17
 
-TEXT_BOX_1 = "Happy Holidays 2022"
+TEXT_BOX_1 = "Happy \nHolidays \n2022"
 TEXT_BOX_2 = "Scholars' Lab TinkerTank"
 
 PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
 ##################### END CONFIG SETTINGS ############################
 
 
+######################################################################
+# TODO:
+# - Auto format the text to fit in the space without needing new line characters
+# - 
+##
+######################################################################
+
 
 # Set up button and camera objects
 blue_button = Button(BUTTON_PIN)
 blue_led = LED(LED_PIN)
-camera = PiCamera()
+camera = PiCamera(resolution=(1920,1080), framerate=15, sensor_mode=5)
 # flip camera vertically, upside down or right side up
 camera.rotation = 180
 # flip horizontally so it doesn't look backwards
