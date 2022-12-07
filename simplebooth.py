@@ -10,6 +10,7 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import qrcode
 import tkinter as tk
+import urllib.request
 
 
 ######################################################################
@@ -29,20 +30,29 @@ BOOTH_IMAGE_PATH = Path(f'/home/pi/Pictures/booth_pics')
 BUTTON_PIN = 4
 LED_PIN = 17
 
-TEXT_BOX_1 = "Lighting\n of the Lawn\n 2022"
+TEXT_BOX_1 = "Happy Holidays 2022"
 TEXT_BOX_2 = "Scholars' Lab TinkerTank"
 
 PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
-
 ##################### END CONFIG SETTINGS ############################
+
+
 
 # Set up button and camera objects
 blue_button = Button(BUTTON_PIN)
 blue_led = LED(LED_PIN)
 camera = PiCamera()
+# flip camera vertically, upside down or right side up
 camera.rotation = 180
+# flip horizontally so it doesn't look backwards
 camera.hflip = True
 
+
+
+
+#####################################################################
+#
+#  QR Code and Google Drive
 
 gauth = GoogleAuth()
 drive = GoogleDrive(gauth)
@@ -67,7 +77,16 @@ def make_qr(fileUrl):
     # Destroy the widget after 30 seconds, the time it takes to print the image
     w.after(30000, lambda: w.destroy()) 
     w.mainloop()
+    camera.stop_preview()
+#####################################################################
 
+
+def connected(host='https://google.com'):
+    try:
+        urllib.request.urlopen(host)
+        return True
+    except:
+        return False
 
 
 # Check for base image folder, create if doesn't exist
@@ -85,7 +104,10 @@ def check_image_folder():
 def show_instructions():
     win = tk.Tk()
     win.attributes('-fullscreen',True) 
-    text = tk.Label(win, text="Get ready to take 3 pictures!\nAfterwards, scan the QR code to download your photo!", font=("Arial", 55))
+    if (has_internet):
+      text = tk.Label(win, text="Get ready to take 3 pictures!\nAfterwards, scan the QR code to download your photo!", font=("Arial", 55))
+    else:
+      text = tk.Label(win, text="Get ready to take 3 pictures!", font=("Arial", 75))
     text.grid(row=2,column=1)
     # Destroy the widget after 6 seconds
     win.after(6000, lambda: win.destroy()) 
@@ -201,13 +223,13 @@ def button_pressed():
   images = take_pics()
   booth_image = make_booth_image(images)
 
-  print_it = printable_image(booth_image)
-  printer_check(PRINTER_NAME)
-  print_booth_image(print_it)
-
-  fileUrl = upload_image(booth_image)
-  camera.stop_preview()
-  make_qr(fileUrl)
+  final_image = printable_image(booth_image)
+  if printer_check(PRINTER_NAME) :
+    print_booth_image(final_image)
+  
+  if (has_internet):
+    fileUrl = upload_image(booth_image)
+    make_qr(fileUrl)
 
   camera.start_preview()
   blue_led.blink()
@@ -215,6 +237,8 @@ def button_pressed():
 
 
 # The main running code
+has_internet = connected()
+
 camera.start_preview()
 blue_led.blink()
 blue_button.when_pressed = button_pressed
