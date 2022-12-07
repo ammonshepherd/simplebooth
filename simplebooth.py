@@ -33,7 +33,8 @@ LED_PIN = 17
 TEXT_BOX_1 = "Happy \nHolidays \n2022"
 TEXT_BOX_2 = "Scholars' Lab TinkerTank"
 
-PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
+#PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
+PRINTER_NAME = "NO PRINT"
 ##################### END CONFIG SETTINGS ############################
 
 
@@ -83,8 +84,8 @@ def make_qr(fileUrl):
     l.grid(row=1,column=1)
     # Destroy the widget after 30 seconds, the time it takes to print the image
     w.after(30000, lambda: w.destroy()) 
-    w.mainloop()
     camera.stop_preview()
+    w.mainloop()
 #####################################################################
 
 
@@ -118,7 +119,9 @@ def show_instructions():
     text.grid(row=2,column=1)
     # Destroy the widget after 6 seconds
     win.after(6000, lambda: win.destroy()) 
+    camera.stop_preview()
     win.mainloop()
+
 
 
 # Take the pictures
@@ -222,11 +225,9 @@ def print_booth_image(printable_image):
 
 
 def button_pressed():
-  camera.stop_preview()
   show_instructions()
   camera.start_preview()
   blue_led.off()
-
   images = take_pics()
   booth_image = make_booth_image(images)
 
