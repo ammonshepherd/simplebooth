@@ -146,6 +146,8 @@ def show_idle_instructions():
 # Take the pictures
 # Returns the path to the directory where photos are stored
 def take_pics():
+  pic_label.destroy()
+
   # Make a folder to store the photos of this session
   # Format the folder name as "YYYY-MM-DD-HH-MM-SS"
   timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
@@ -167,6 +169,12 @@ def take_pics():
       o.layer = 3
       time.sleep(1)
       camera.remove_overlay(o)
+    # show white screen
+    camera.stop_preview()
+    instructions.set("")
+    instruct_label.grid_remove()
+    camera.start_preview()
+
     camera.capture(f'{folder_path}/{timestamp}_{i}.jpg', resize=(1120, 840))
     image_list.append(f'{folder_path}/{timestamp}_{i}.jpg')
   return image_list
@@ -253,6 +261,11 @@ def button_pressed():
   images = take_pics()
   camera.stop_preview()
 
+  booth_icon = Image.open("simplebooth-icon.png")
+  pic = ImageTk.PhotoImage(booth_icon)
+  pic_label = tk.Label(win, image = pic)
+  pic_label.image = pic
+  pic_label.grid(row=1)
   instruct_label.grid(row=2)
   instructions.set("Please wait while pictures are created.")
 
