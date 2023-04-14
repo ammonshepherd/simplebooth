@@ -1,7 +1,7 @@
 import time
 import subprocess
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 from gpiozero import Button, LED
 from picamera import PiCamera
 from datetime import datetime
@@ -56,7 +56,7 @@ blue_button = Button(BUTTON_PIN)
 blue_led = LED(LED_PIN)
 camera = PiCamera(resolution=(1920,1080), framerate=15, sensor_mode=5)
 # flip camera vertically, upside down or right side up
-camera.rotation = 180
+#camera.rotation = 180
 # flip horizontally so it doesn't look backwards
 camera.hflip = True
 
@@ -67,9 +67,12 @@ screen_width = win.winfo_screenwidth()
 
 # show idle instructions
 instructions = tk.StringVar()
-instruct_label = tk.Label(win, textvariable=instructions, font=("Arial", 85), wraplength=screen_width, justify="center")
-# instructions = tk.Label(win, text="Get ready to take 3 pictures!\nAfterwards, scan the QR code to download your photo!", font=("Arial", 55))
+instruct_label = tk.Label(win, textvariable=instructions, font=("Arial", 85), wraplength=screen_width)
 
+booth_icon = Image.open("simplebooth-icon.png")
+pic = ImageTk.PhotoImage(booth_icon)
+pic_label = tk.Label(win, image = pic)
+pic_label.image = pic
 
 #####################################################################
 #
@@ -130,9 +133,12 @@ def check_image_folder():
 def show_idle_instructions():
     camera.stop_preview()
     blue_led.blink()
-    instruct_label.grid(row=1,column=1)
-    instructions.set("Press the button to take pictures!")
-    # Destroy the widget after 6 seconds
+
+    pic_label.grid(row=1)
+
+    instructions.set(f"Press the button to take pictures!")
+    instruct_label.grid(row=2)
+
     blue_button.when_pressed = button_pressed
 
 
@@ -238,7 +244,7 @@ def print_booth_image(printable_image):
 
 
 def button_pressed():
-  instructions.set("Get ready to take 3 pictures. \n Then scan the QR code \nto download the photobooth image.")
+  instructions.set("Get ready to take 3 pictures. \n Then scan the QR code to download the image.")
   time.sleep(6)
   instruct_label.grid_remove()
 
@@ -247,21 +253,21 @@ def button_pressed():
   images = take_pics()
   camera.stop_preview()
 
-  instruct_label.grid()
+  instruct_label.grid(row=2)
   instructions.set("Please wait while pictures are created.")
 
   booth_image = make_booth_image(images)
   final_image = printable_image(booth_image)
 
   if printer_check(PRINTER_NAME) :
-    # print_booth_image(final_image)
+    #print_booth_image(final_image)
     print("printing image")
   
   if (has_internet):
     fileUrl = upload_image(booth_image)
-    # print(fileUrl)
+    print(fileUrl)
     make_qr(fileUrl)
-    # print("uploading file and making QR code")
+    print("uploading file and making QR code")
 
   blue_led.blink()
   show_idle_instructions()
