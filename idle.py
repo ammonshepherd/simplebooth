@@ -1,17 +1,17 @@
-import time
 import subprocess
-from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont, ImageTk
-from gpiozero import Button, LED
-from picamera import PiCamera
-from datetime import datetime
-from signal import pause
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-import qrcode
+import time
 import tkinter as tk
 import urllib.request
+from datetime import datetime
+from pathlib import Path
+from signal import pause
 
+import qrcode
+from gpiozero import LED, Button
+from picamera import PiCamera
+from PIL import Image, ImageDraw, ImageFont, ImageTk
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 # Set the photobooth mode
 # TT = in the TinkerTank, show text to start the process. Camera not visible until button pressed.
@@ -71,8 +71,8 @@ instruct_label = tk.Label(win, textvariable=instructions, font=("Arial", 85), wr
 
 booth_icon = Image.open("simplebooth-icon.png")
 pic = ImageTk.PhotoImage(booth_icon)
-pic_label = tk.Label(win, image = pic)
-pic_label.image = pic
+icon_label = tk.Label(win, image = pic)
+icon_label.image = pic
 
 #####################################################################
 #
@@ -102,10 +102,11 @@ def make_qr(fileUrl):
     # # Destroy the widget after 30 seconds, the time it takes to print the image
     # w.after(30000, lambda: w.destroy()) 
     # w.mainloop()
-    instructions.set("Scan this code to download your photo!")
+    icon_label.destroy()
+    instructions.set("While your photo is printing, scan this code to download your image!")
     qrImage = tk.PhotoImage(file=f'{SIMPLEPATH}/qrimage.png')
     qrLabel = tk.Label(win, image=qrImage)
-    qrLabel.grid(row=2, column=1)
+    qrLabel.grid(row=1)
     time.sleep(20)
     qrLabel.grid_remove()
 #####################################################################
@@ -134,7 +135,11 @@ def show_idle_instructions():
     camera.stop_preview()
     blue_led.blink()
 
-    pic_label.grid(row=1)
+    booth_icon = Image.open("simplebooth-icon.png")
+    pic = ImageTk.PhotoImage(booth_icon)
+    icon_label = tk.Label(win, image = pic)
+    icon_label.image = pic
+    icon_label.grid(row=1)
 
     instructions.set(f"Press the button to take pictures!")
     instruct_label.grid(row=2)
@@ -146,7 +151,7 @@ def show_idle_instructions():
 # Take the pictures
 # Returns the path to the directory where photos are stored
 def take_pics():
-  pic_label.destroy()
+  icon_label.destroy()
 
   # Make a folder to store the photos of this session
   # Format the folder name as "YYYY-MM-DD-HH-MM-SS"
@@ -252,7 +257,7 @@ def print_booth_image(printable_image):
 
 
 def button_pressed():
-  instructions.set("Get ready to take 3 pictures. \n Then scan the QR code to download the image.")
+  instructions.set("Get ready to take 3 pictures. Then scan the QR code to download the image.")
   time.sleep(6)
   instruct_label.grid_remove()
 
@@ -263,9 +268,9 @@ def button_pressed():
 
   booth_icon = Image.open("simplebooth-icon.png")
   pic = ImageTk.PhotoImage(booth_icon)
-  pic_label = tk.Label(win, image = pic)
-  pic_label.image = pic
-  pic_label.grid(row=1)
+  icon_label = tk.Label(win, image = pic)
+  icon_label.image = pic
+  icon_label.grid(row=1)
   instruct_label.grid(row=2)
   instructions.set("Please wait while pictures are created.")
 
@@ -273,7 +278,7 @@ def button_pressed():
   final_image = printable_image(booth_image)
 
   if printer_check(PRINTER_NAME) :
-    #print_booth_image(final_image)
+    print_booth_image(final_image)
     print("printing image")
   
   if (has_internet):
