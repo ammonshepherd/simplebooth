@@ -4,7 +4,6 @@ import tkinter as tk
 import urllib.request
 from datetime import datetime
 from pathlib import Path
-from signal import pause
 
 import qrcode
 from gpiozero import LED, Button
@@ -13,10 +12,6 @@ from PIL import Image, ImageDraw, ImageFont, ImageTk
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
-# Set the photobooth mode
-# TT = in the TinkerTank, show text to start the process. Camera not visible until button pressed.
-# LOTL = Lighting of The Lawn, continual shoot mode. Press the button to start taking pictures. Camera view is always visible.
-MODE = 'TT'
 
 ######################################################################
 #
@@ -77,9 +72,14 @@ icon_label.image = pic
 #####################################################################
 #
 #  QR Code and Google Drive
-
-gauth = GoogleAuth()
-drive = GoogleDrive(gauth)
+gdrive_status = False
+try:
+  gauth = GoogleAuth()
+  gauth.LocalWebserverAuth()
+  drive = GoogleDrive(gauth)
+  gdrive_status = True
+except:
+  gdrive_status = False
 
 def upload_image(image_file):
     gfile = drive.CreateFile({'parents': [{'id': '1FEH74jojf7WPOYk0ILqexKMs-ezGwGnE'}]})
@@ -257,7 +257,11 @@ def print_booth_image(printable_image):
 
 
 def button_pressed():
-  instructions.set("Get ready to take 3 pictures. Then scan the QR code to download the image.")
+  if(gdrive_status):
+    instructions.set("Get ready to take 3 pictures. Then scan the QR code to download the image.")
+  else:
+    instructions.set("Get ready to take 3 pictures.")
+
   time.sleep(6)
   instruct_label.grid_remove()
 
@@ -281,9 +285,8 @@ def button_pressed():
     print_booth_image(final_image)
     print("printing image")
   
-  if (has_internet):
+  if (has_internet and gdrive_status):
     fileUrl = upload_image(booth_image)
-    print(fileUrl)
     make_qr(fileUrl)
     print("uploading file and making QR code")
 
