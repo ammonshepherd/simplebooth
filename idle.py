@@ -30,7 +30,7 @@ BOOTH_IMAGE_PATH = Path(f'/home/pi/Pictures/booth_pics')
 BUTTON_PIN = 4
 LED_PIN = 17
 
-TEXT_BOX_1 = "Enjoy\nthe\nday!"
+TEXT_BOX_1 = "Seize the day!"
 TEXT_BOX_2 = "Scholars' Lab TinkerTank"
 
 PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
@@ -198,7 +198,7 @@ def make_booth_image(images):
     booth_image.paste(new_img, (x, y))
     y = y + 880
   # Add the main, big text box
-  fnt1 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 210)
+  fnt1 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 130)
   text_1 = ImageDraw.Draw(booth_image)
   text_1.multiline_text((40, 2680), TEXT_BOX_1, font=fnt1, fill=(35, 45, 75), spacing=20, align="center", stroke_width=8, stroke_fill=(229,114,0))
 
