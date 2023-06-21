@@ -75,6 +75,7 @@ icon_label.image = pic
 gdrive_status = False
 try:
   gauth = GoogleAuth()
+  gauth.LoadCredentialsFile("mycreds.json")
   gauth.LocalWebserverAuth()
   drive = GoogleDrive(gauth)
   gdrive_status = True
