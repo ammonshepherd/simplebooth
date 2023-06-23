@@ -59,6 +59,7 @@ camera.hflip = True
 win = tk.Tk()
 win.attributes('-fullscreen',True) 
 screen_width = win.winfo_screenwidth()
+win.grid_columnconfigure((0,2), weight=1)
 
 # show idle instructions
 instructions = tk.StringVar()
@@ -97,7 +98,7 @@ def make_qr(fileUrl):
     instructions.set("While your photo is printing, scan this code to download your image!")
     qrImage = tk.PhotoImage(file=f'{SIMPLEPATH}/qrimage.png')
     qrLabel = tk.Label(win, image=qrImage)
-    qrLabel.grid(row=1)
+    qrLabel.grid(row=0, column=1, sticky="ew")
     time.sleep(20)
     qrLabel.grid_remove()
 #####################################################################
@@ -130,10 +131,10 @@ def show_idle_instructions():
     pic = ImageTk.PhotoImage(booth_icon)
     icon_label = tk.Label(win, image = pic)
     icon_label.image = pic
-    icon_label.grid(row=1)
+    icon_label.grid(row=0, column=1, sticky="ew")
 
     instructions.set(f"Press the button to take pictures!")
-    instruct_label.grid(row=2)
+    instruct_label.grid(row=1, column=1, sticky="ew")
 
     blue_button.when_pressed = button_pressed
 
@@ -265,15 +266,15 @@ def button_pressed():
   pic = ImageTk.PhotoImage(booth_icon)
   icon_label = tk.Label(win, image = pic)
   icon_label.image = pic
-  icon_label.grid(row=1)
-  instruct_label.grid(row=2)
+  icon_label.grid(row=0, column=1, sticky="ew")
+  instruct_label.grid(row=1, column=1, sticky="ew")
   instructions.set("Please wait while pictures are created.")
 
   booth_image = make_booth_image(images)
   final_image = printable_image(booth_image)
 
   if printer_check(PRINTER_NAME) :
-    print_booth_image(final_image)
+    # print_booth_image(final_image)
     print("printing image")
   
   if (has_internet and gdrive_status):
