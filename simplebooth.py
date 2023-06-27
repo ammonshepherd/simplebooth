@@ -32,6 +32,10 @@ LED_PIN = 17
 # this number to anything other than 3. Better functionality will come
 # in the future...
 NUM_PICS = 3
+
+# Messages to print at the bottom of the photobooth strip
+TOP_TEXT = "Make it a GREAT day!"
+BOTTOM_TEXT = "Scholars' Lab TinkerTank"
 ##################### END CONFIG SETTINGS ############################
 
 
@@ -86,6 +90,7 @@ camera.hflip = True
 
 def main_screen():
     """Show the main screen to get users to push the button."""
+
     global logo_label
     global instructions_text
     global instructions_label
@@ -106,6 +111,7 @@ def button_pressed():
     """After button press, take the pictures, print pictures, and if
     available, upload pictures to Google Doc and show a QR Code. Then
     show the main screen."""
+
     global logo_label
     global instructions_label
     global instructions_text
@@ -127,6 +133,15 @@ def button_pressed():
     images = take_pics(NUM_PICS)
     camera.stop_preview()
 
+    # Show logo and instructions while images are created and printed
+    logo_label.grid(row=0, column=1, sticky="ew")
+    instructions_text.set("Please wait while the picture is printing.")
+    instructions_label.grid(row=1, column=1, sticky="ew")
+
+    # make the photobooth image, and the doubled image for printing
+    booth_image = make_booth_image(images)
+    final_image = printable_image(booth_image)
+
     # And back to the main screen
     main_screen()
 
@@ -134,6 +149,7 @@ def button_pressed():
 def take_pics(num_pics):
     """Take the pictures and return the path to the directory where the
     photos are stored."""
+
     global logo_label
     global instructions_text
     global instructions_label
@@ -155,14 +171,14 @@ def take_pics(num_pics):
     win.configure(bg="white")
 
     # Loop to take num_pics number of pictures
-    for i in range(1,num_pics+1):
+    for i in range(1, num_pics+1):
         # Loop to show the countdown numbers
-        for n in range(3,0,-1):
+        for n in range(3, 0, -1):
             img = Image.open(f'{SIMPLEPATH}/count_down/{n}.png')
             pad = Image.new('RGBA', (
                 ((img.size[0] + 31) // 32) * 32,
                 ((img.size[1] + 15) // 16) * 16,
-                ))
+            ))
             pad.paste(img, (0, 0))
             # add the number as an overlay
             o = camera.add_overlay(pad.tobytes(), size=img.size)
@@ -174,20 +190,71 @@ def take_pics(num_pics):
         camera.stop_preview()
         camera.start_preview()
         # image size based on three images for a classic photostrip
-        camera.capture(f'{folder_path}/{timestamp}_{i}.jpg', resize=(1120, 840))
+        camera.capture(f'{folder_path}/{timestamp}_{i}.jpg',
+                       resize=(1120, 840))
         image_list.append(f'{folder_path}/{timestamp}_{i}.jpg')
 
     # return the background to black
     win.configure(bg="black")
     return image_list
 
+
 def check_image_folder():
     """Check for base image folder. Create if it doesn't exist."""
+
     if Path(BOOTH_IMAGE_PATH).exists():
         return True
     else:
         Path(f'{str(BOOTH_IMAGE_PATH)}').mkdir()
         return True
+
+
+def make_booth_image(images):
+    """Make photobooth image. Use images in the given path to create the
+    photobooth image that will be printed."""
+    # Currently, the only option is the classic, three stacked images
+
+    folder_path = Path(images[0]).parent
+    booth_image = Image.new('RGB', (1200, 3600), (255, 255, 255))
+    # place the first image 40 pixels in from the top left corner
+    x, y = 40, 40
+    for img in images:
+        new_img = Image.open(img)
+        booth_image.paste(new_img, (x, y))
+        # add 880 pixels to where the bottom of each image is placed
+        y = y + 880
+    # Add the main, big text box
+    # font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", 130)
+    font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf")
+    top_text = ImageDraw.Draw(booth_image)
+    top_text.multiline_text((40, 2680), TOP_TEXT, font=font1, fill=(
+        35, 45, 75), spacing=20, align="center", stroke_width=8, stroke_fill=(229, 114, 0))
+
+    # add the smaller text
+    font2 = ImageFont.truetype(
+        "/usr/share/fonts/truetype/freefont/FreeSans.ttf", 90)
+    bottom_text = ImageDraw.Draw(booth_image)
+    bottom_text.multiline_text((40, 3420), BOTTOM_TEXT, font=font2,
+                               fill=(248, 76, 30), align="center")
+
+    booth_image.save(f'{folder_path}/booth_image.jpg')
+    return f'{folder_path}/booth_image.jpg'
+
+
+def printable_image(booth_image):
+    """Make the image ready for printing. The printer needs an image that 
+    is a composition of two photobooth strips side-by-side."""
+
+    folder_path = Path(booth_image).parent
+    img = Image.open(booth_image)
+    new_img = Image.new('RGB', (2*img.size[0], img.size[1]), (250, 250, 250))
+    new_img.paste(img, (0, 0))
+    new_img.paste(img, (img.size[0], 0))
+    new_name = Path(booth_image).stem
+    new_img.save(f'{folder_path}/{new_name}_double.jpg')
+    # return full path and file name
+    print_image = f'{folder_path}/{new_name}_double.jpg'
+    return print_image
 
 
 ######################################################################
