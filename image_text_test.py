@@ -3,12 +3,13 @@ import textwrap
 
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
-if Path(f'/home/pi/Pictures/simplebooth_pictures/2023-06-26-12-44-49/booth_image.jpg').exists():
-    Path(f'/home/pi/Pictures/simplebooth_pictures/2023-06-26-12-44-49/booth_image.jpg').unlink()
+HOME = "/home/slabpi/simplebooth/simplebooth"
+if Path(f'{HOME}/temp_pics/2023-06-26-12-44-49/booth_image.jpg').exists():
+    Path(f'{HOME}/temp_pics/2023-06-26-12-44-49/booth_image.jpg').unlink()
 
-images = list(Path("/home/pi/Pictures/simplebooth_pictures/2023-06-26-12-44-49/").iterdir())
+image_list = list(Path(f"{HOME}/temp_pics/2023-06-26-12-44-49/").iterdir())
 
-TOP_TEXT = "a b c d e f g h i j k l m n o p q r s t u v w x y z"
+TOP_TEXT = "Make it a GREAT day!"
 BOTTOM_TEXT = "Scholars' Lab TinkerTank"
 TOP_TEXT_BOX_WIDTH = 1120
 TOP_TEXT_BOX_HEIGHT = 700
@@ -29,23 +30,32 @@ def make_booth_image(images):
         # add 880 pixels to where the bottom of each image is placed
         y = y + 880
 
-    # Add the main, big text box
-    # font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", 130)
     top_font_size = 180
-    wrap_size = 28
-    line_length = 2000
+    wrapped_height = 100
 
-    while line_length > 1160:
-        # while wrapped_width > 1160 or wrapped_height > 700
+    top_text = ImageDraw.Draw(booth_image)
+    font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", top_font_size)
+    wrap_size = get_wrap(top_text, TOP_TEXT, font1)
+
+    while (wrapped_height < 630) or (wrapped_height > 680):
         font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", top_font_size)
-        top_text = ImageDraw.Draw(booth_image)
+        wrap_size = get_wrap(top_text, TOP_TEXT, font1)
         wrapped_text = textwrap.fill(TOP_TEXT, wrap_size)
-        top_text.multiline_text((40, 2680), wrapped_text, font=font1, fill=( 35, 45, 75), spacing=20, align="center")
+        wrapped_length, wrapped_height = get_text_lh((40, 2680), top_text, wrapped_text, font1)
+        print(wrapped_length, wrapped_height, top_font_size, wrap_size)
+        if wrapped_length > 1050:
+            break
+        if wrapped_height > 680:
+            top_font_size -= 10
+        elif wrapped_height < 630:
+            top_font_size += 10
 
-        wrap_size, line_length = get_text_dimensions(top_text, TOP_TEXT, font1)
-        wrap_size -= 1
-        top_font_size += 10
-        print(get_text_dimensions(top_text, TOP_TEXT, font1))
+    # font1 = ImageFont.truetype(
+    #     "/usr/share/fonts/truetype/freefont/FreeSans.ttf", 200)
+    # wrapped_text = textwrap.fill(TOP_TEXT, 12)
+
+    top_text.multiline_text((40, 2680), wrapped_text, font=font1, fill=( 35, 45, 75), spacing=20, align="center")
+
 
     # add the smaller text
     font2 = ImageFont.truetype(
@@ -58,7 +68,7 @@ def make_booth_image(images):
     return f'{folder_path}/booth_image.jpg'
 
 
-def get_text_dimensions(text_obj, text, the_font):
+def get_wrap(text_obj, text, the_font):
     new_text = ""
     char_count = 0
     line_length = 0
@@ -68,8 +78,14 @@ def get_text_dimensions(text_obj, text, the_font):
         line_length = int(text_obj.textlength(new_text, font=the_font))
         if line_length >= 1100:
             break
-    return char_count, line_length
+    return char_count
+
+def get_text_lh(xy, text_obj, text, the_font):
+    """ Given a wrapped text object, return the height """
+    left, top, right, bottom = text_obj.multiline_textbbox(xy, text, font=the_font)
+    length = right - left
+    height = bottom - top
+    return length, height
 
 
-
-make_booth_image(images)
+make_booth_image(image_list)
