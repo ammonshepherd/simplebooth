@@ -1,5 +1,6 @@
 from pathlib import Path
 import textwrap
+import random
 
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
@@ -9,7 +10,14 @@ if Path(f'{HOME}/temp_pics/2023-06-26-12-44-49/booth_image.jpg').exists():
 
 image_list = list(Path(f"{HOME}/temp_pics/2023-06-26-12-44-49/").iterdir())
 
-TOP_TEXT = "Study Hard so you can Party harder!"
+TOP_TEXT = ["Be the best you can, so you can do the best you can!",
+            "Do good, be good, but if you have to choose, be good.",
+            "Make it a GREAT day!",
+            "Sieze the day!",
+            "Ya'll are AWESOME!",
+            "WE GOT THIS!",
+            "BFF!",
+            "We so cool!"]
 BOTTOM_TEXT = "Scholars' Lab TinkerTank"
 
 STRIP_BORDER = 40
@@ -36,16 +44,17 @@ def make_booth_image(images):
         # add 880 pixels to where the bottom of each image is placed
         y = y + 880
 
-
+    # Top text 
+    random_text = random.choice(TOP_TEXT)
     top_text = ImageDraw.Draw(booth_image)
-    wrapped_text, font1 = create_text(top_text, TOP_TEXT, TOP_TEXT_HEIGHT_MIN,
+    long_text, font1 = create_text(top_text, random_text, TOP_TEXT_HEIGHT_MIN,
                                       TOP_TEXT_HEIGHT_MAX)
-    top_text.multiline_text((STRIP_BORDER, 2680), wrapped_text, font=font1, fill=( 35, 45, 75), spacing=20, align="center")
+    top_text.multiline_text((STRIP_BORDER, 2680), long_text, font=font1, fill=( 35, 45, 75), spacing=20, align="center")
 
     # add the smaller text
+    bottom_text = ImageDraw.Draw(booth_image)
     font2 = ImageFont.truetype(
         "/usr/share/fonts/truetype/freefont/FreeSans.ttf", 90)
-    bottom_text = ImageDraw.Draw(booth_image)
     bottom_text.multiline_text((40, 3420), BOTTOM_TEXT, font=font2,
                                fill=(248, 76, 30), align="center")
 
@@ -54,24 +63,25 @@ def make_booth_image(images):
 
 def create_text(text_obj, text, height_min, height_max):
     """ Create the text under the images """
-    top_font_size = 180
+    font_size = 180
     wrapped_height = 100
+    wrapped_text = ""
 
-    font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", top_font_size)
+    font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
     wrap_size = get_wrap(text_obj, text, font1)
 
     while (wrapped_height < height_min) or (wrapped_height > height_max):
-        font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", top_font_size)
+        font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
         wrap_size = get_wrap(text_obj, text, font1)
         wrapped_text = textwrap.fill(text, wrap_size)
         wrapped_length, wrapped_height = get_text_lh((STRIP_BORDER, 2680), text_obj, wrapped_text, font1)
-        print(wrapped_length, wrapped_height, top_font_size, wrap_size)
+        print(wrapped_length, wrapped_height, font_size, wrap_size)
         if wrapped_length > TEXT_LENGTH_MAX:
             break
         if wrapped_height > height_max:
-            top_font_size -= 10
+            font_size -= 10
         elif wrapped_height < height_min:
-            top_font_size += 10
+            font_size += 10
 
     return wrapped_text, font1
 
