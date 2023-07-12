@@ -1,6 +1,8 @@
 import time
-import textwrap
 import random
+import textwrap
+import subprocess
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -59,6 +61,8 @@ STRIP_LENGTH = 3600
 TEXT_LENGTH_MAX = STRIP_WIDTH - (STRIP_BORDER * 2) - 20
 TOP_TEXT_HEIGHT_MIN = 630
 TOP_TEXT_HEIGHT_MAX = 680
+
+PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
 ##################### END CONFIG SETTINGS ############################
 
 
@@ -156,14 +160,19 @@ def button_pressed():
     images = take_pics(NUM_PICS)
     camera.stop_preview()
 
+    # Make the photobooth image, and the doubled image for printing
+    booth_image = make_booth_image(images)
+    final_image = printable_image(booth_image)
+
+    if printer_check(PRINTER_NAME):
+        print_booth_image(final_image)
+        print("printing image")
+
     # Show logo and instructions while images are created and printed
     logo_label.grid(row=0, column=1, sticky="ew")
     instructions_text.set("Please wait while the picture is printing.")
     instructions_label.grid(row=1, column=1, sticky="ew")
-
-    # Make the photobooth image, and the doubled image for printing
-    booth_image = make_booth_image(images)
-    final_image = printable_image(booth_image)
+    time.sleep(20)
 
     # If connected to internet, upload image to Google Drive and create QR code
     if (has_internet and gdrive_status):
@@ -244,7 +253,8 @@ def make_booth_image(images):
     # Currently, the only option is the classic, three stacked images
 
     folder_path = Path(images[0]).parent
-    booth_image = Image.new('RGB', (STRIP_WIDTH, STRIP_LENGTH), (255, 255, 255))
+    booth_image = Image.new(
+        'RGB', (STRIP_WIDTH, STRIP_LENGTH), (255, 255, 255))
     # place the first image 40 pixels in from the top left corner
     x, y = STRIP_BORDER, STRIP_BORDER
     for img in images:
@@ -253,12 +263,13 @@ def make_booth_image(images):
         # add 880 pixels to where the bottom of each image is placed
         y = y + 880
 
-    # Top text 
+    # Top text
     random_text = random.choice(TOP_TEXT)
     top_text = ImageDraw.Draw(booth_image)
     long_text, font1 = create_text(top_text, random_text, TOP_TEXT_HEIGHT_MIN,
-                                      TOP_TEXT_HEIGHT_MAX)
-    top_text.multiline_text((STRIP_BORDER, 2680), long_text, font=font1, fill=( 35, 45, 75), spacing=20, align="center")
+                                   TOP_TEXT_HEIGHT_MAX)
+    top_text.multiline_text((STRIP_BORDER, 2680), long_text, font=font1, fill=(
+        35, 45, 75), spacing=20, align="center")
 
     # add the smaller text
     bottom_text = ImageDraw.Draw(booth_image)
@@ -277,14 +288,17 @@ def create_text(text_obj, text, height_min, height_max):
     wrapped_height = 100
     wrapped_text = ""
 
-    font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
+    font1 = ImageFont.truetype(
+        "/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
     wrap_size = get_wrap(text_obj, text, font1)
 
     while (wrapped_height < height_min) or (wrapped_height > height_max):
-        font1 = ImageFont.truetype( "/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
+        font1 = ImageFont.truetype(
+            "/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
         wrap_size = get_wrap(text_obj, text, font1)
         wrapped_text = textwrap.fill(text, wrap_size)
-        wrapped_length, wrapped_height = get_text_lh((STRIP_BORDER, 2680), text_obj, wrapped_text, font1)
+        wrapped_length, wrapped_height = get_text_lh(
+            (STRIP_BORDER, 2680), text_obj, wrapped_text, font1)
         if wrapped_length > TEXT_LENGTH_MAX:
             break
         if wrapped_height > height_max:
@@ -311,7 +325,8 @@ def get_wrap(text_obj, text, the_font):
 
 def get_text_lh(xy, text_obj, text, the_font):
     """ Given a wrapped text object, return the height """
-    left, top, right, bottom = text_obj.multiline_textbbox(xy, text, font=the_font)
+    left, top, right, bottom = text_obj.multiline_textbbox(
+        xy, text, font=the_font)
     length = right - left
     height = bottom - top
     return length, height
@@ -334,6 +349,8 @@ def printable_image(booth_image):
 
 
 def has_internet(host='https://google.com'):
+    """ Check if the Pi has connection to the internet """
+
     try:
         urllib.request.urlopen(host)
         return True
@@ -342,24 +359,54 @@ def has_internet(host='https://google.com'):
 
 
 def upload_image(image_file):
-    gfile = drive.CreateFile({'parents': [{'id': '1FEH74jojf7WPOYk0ILqexKMs-ezGwGnE'}]})
+    """ Upload image to Google Drive """
+
+    gfile = drive.CreateFile(
+        {'parents': [{'id': '1FEH74jojf7WPOYk0ILqexKMs-ezGwGnE'}]})
     # Read file and set it as the content of this instance.
     gfile.SetContentFile(image_file)
-    gfile.Upload() # Upload the file.
+    gfile.Upload()  # Upload the file.
     return gfile.metadata['webContentLink']
 
 
 def make_qr(fileUrl):
+    """ Create a QR code of the URL to download the image """
+
+    global logo_label
+    global instructions_text
+    global instructions_label
+
     camera.stop_preview()
     qr = qrcode.make(fileUrl)
     qr.save(f'{SIMPLEPATH}/qrimage.png')
-    icon_label.destroy()
-    instructions.set("While your photo is printing, scan this code to download your image!")
+    logo_label.grid_remove()
+    instructions_text.set(
+        "While your photo is printing, scan this code to download your image!")
+    instructions_label.grid(row=1, column=1, sticky="ew")
     qrImage = tk.PhotoImage(file=f'{SIMPLEPATH}/qrimage.png')
     qrLabel = tk.Label(win, image=qrImage)
     qrLabel.grid(row=0, column=1, sticky="ew")
     time.sleep(20)
     qrLabel.grid_remove()
+
+
+# - TODO: look into using pycups library
+def print_booth_image(printable_image):
+  """ Send the booth image to the printer """
+
+  output = subprocess.run(["lp", "-d", PRINTER_NAME, printable_image], capture_output=True)
+  return True
+  
+
+def printer_check(printer_name):
+  """ Check if the printer is connected """
+
+  attached_printers = subprocess.run(['lpstat', '-p'], capture_output=True)
+  if printer_name in attached_printers.stdout.decode('utf-8'):
+    return True
+  else:
+    return False
+
 
 ######################################################################
 #
@@ -373,13 +420,13 @@ check_image_folder()
 # Set status of Google Drive connection
 gdrive_status = False
 try:
-  gauth = GoogleAuth()
-  gauth.LoadCredentialsFile("mycreds.json")
-  gauth.LocalWebserverAuth()
-  drive = GoogleDrive(gauth)
-  gdrive_status = True
+    gauth = GoogleAuth()
+    gauth.LoadCredentialsFile("mycreds.json")
+    gauth.LocalWebserverAuth()
+    drive = GoogleDrive(gauth)
+    gdrive_status = True
 except:
-  gdrive_status = False
+    gdrive_status = False
 
 
 # Call the main screen function to get things going!
