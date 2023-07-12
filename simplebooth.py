@@ -10,6 +10,11 @@ from PIL import Image, ImageDraw, ImageFont, ImageTk
 from gpiozero import LED, Button
 from picamera import PiCamera
 
+import qrcode
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+
+
 ######################################################################
 #
 #         CONFIG SETTINGS
@@ -156,9 +161,15 @@ def button_pressed():
     instructions_text.set("Please wait while the picture is printing.")
     instructions_label.grid(row=1, column=1, sticky="ew")
 
-    # make the photobooth image, and the doubled image for printing
+    # Make the photobooth image, and the doubled image for printing
     booth_image = make_booth_image(images)
     final_image = printable_image(booth_image)
+
+    # If connected to internet, upload image to Google Drive and create QR code
+    if (has_internet and gdrive_status):
+        print("internet connected")
+        fileUrl = upload_image(booth_image)
+        make_qr(fileUrl)
 
     # And back to the main screen
     main_screen()
@@ -259,6 +270,7 @@ def make_booth_image(images):
     booth_image.save(f'{folder_path}/booth_image.jpg')
     return f'{folder_path}/booth_image.jpg'
 
+
 def create_text(text_obj, text, height_min, height_max):
     """ Create the text under the images """
     font_size = 180
@@ -273,7 +285,6 @@ def create_text(text_obj, text, height_min, height_max):
         wrap_size = get_wrap(text_obj, text, font1)
         wrapped_text = textwrap.fill(text, wrap_size)
         wrapped_length, wrapped_height = get_text_lh((STRIP_BORDER, 2680), text_obj, wrapped_text, font1)
-        print(wrapped_length, wrapped_height, font_size, wrap_size)
         if wrapped_length > TEXT_LENGTH_MAX:
             break
         if wrapped_height > height_max:
@@ -282,6 +293,7 @@ def create_text(text_obj, text, height_min, height_max):
             font_size += 10
 
     return wrapped_text, font1
+
 
 def get_wrap(text_obj, text, the_font):
     """ Get the number of characters to wrap the text at 1100 pixels """
@@ -295,6 +307,7 @@ def get_wrap(text_obj, text, the_font):
         if line_length >= 1100:
             break
     return char_count
+
 
 def get_text_lh(xy, text_obj, text, the_font):
     """ Given a wrapped text object, return the height """
@@ -320,6 +333,34 @@ def printable_image(booth_image):
     return print_image
 
 
+def has_internet(host='https://google.com'):
+    try:
+        urllib.request.urlopen(host)
+        return True
+    except:
+        return False
+
+
+def upload_image(image_file):
+    gfile = drive.CreateFile({'parents': [{'id': '1FEH74jojf7WPOYk0ILqexKMs-ezGwGnE'}]})
+    # Read file and set it as the content of this instance.
+    gfile.SetContentFile(image_file)
+    gfile.Upload() # Upload the file.
+    return gfile.metadata['webContentLink']
+
+
+def make_qr(fileUrl):
+    camera.stop_preview()
+    qr = qrcode.make(fileUrl)
+    qr.save(f'{SIMPLEPATH}/qrimage.png')
+    icon_label.destroy()
+    instructions.set("While your photo is printing, scan this code to download your image!")
+    qrImage = tk.PhotoImage(file=f'{SIMPLEPATH}/qrimage.png')
+    qrLabel = tk.Label(win, image=qrImage)
+    qrLabel.grid(row=0, column=1, sticky="ew")
+    time.sleep(20)
+    qrLabel.grid_remove()
+
 ######################################################################
 #
 #        Main Script Functionality
@@ -327,6 +368,19 @@ def printable_image(booth_image):
 #######################################################################
 # Check for the folder to store images.
 check_image_folder()
+
+
+# Set status of Google Drive connection
+gdrive_status = False
+try:
+  gauth = GoogleAuth()
+  gauth.LoadCredentialsFile("mycreds.json")
+  gauth.LocalWebserverAuth()
+  drive = GoogleDrive(gauth)
+  gdrive_status = True
+except:
+  gdrive_status = False
+
 
 # Call the main screen function to get things going!
 main_screen()
