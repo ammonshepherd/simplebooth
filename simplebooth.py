@@ -139,16 +139,17 @@ def button_pressed():
     available, upload pictures to Google Doc and show a QR Code. Then
     show the main screen."""
 
+    global connected
     global logo_label
-    global instructions_label
     global instructions_text
+    global instructions_label
 
     # Turn off the blinking
     blue_led.off()
 
     # Set new instructions_text, and pause for 6 seconds
     instructions_text.set(f"Get ready to take {NUM_PICS} pictures!")
-    time.sleep(6)
+    time.sleep(3)
 
     # Remove the logo and the instructions_text
     logo_label.grid_remove()
@@ -165,17 +166,18 @@ def button_pressed():
     final_image = printable_image(booth_image)
 
     if printer_check(PRINTER_NAME):
-        print_booth_image(final_image)
+        # print_booth_image(final_image)
         print("printing image")
 
     # Show logo and instructions while images are created and printed
     logo_label.grid(row=0, column=1, sticky="ew")
     instructions_text.set("Please wait while the picture is printing.")
     instructions_label.grid(row=1, column=1, sticky="ew")
-    time.sleep(20)
+    # remove sleep line when QR code functionality is working
+    # time.sleep(20)
 
     # If connected to internet, upload image to Google Drive and create QR code
-    if (has_internet and gdrive_status):
+    if (connected):
         print("internet connected")
         fileUrl = upload_image(booth_image)
         make_qr(fileUrl)
@@ -416,18 +418,23 @@ def printer_check(printer_name):
 # Check for the folder to store images.
 check_image_folder()
 
-
-# Set status of Google Drive connection
-gdrive_status = False
-try:
-    gauth = GoogleAuth()
-    gauth.LoadCredentialsFile("mycreds.json")
-    gauth.LocalWebserverAuth()
-    drive = GoogleDrive(gauth)
-    gdrive_status = True
-except:
-    gdrive_status = False
-
+# Check if connected to the internet
+connected = False
+if (has_internet):
+    # Set status of Google Drive connection
+    connected = False
+    try:
+        gauth = GoogleAuth()
+        gauth.LoadCredentialsFile("mycreds.json")
+        gauth.LocalWebserverAuth()
+        drive = GoogleDrive(gauth)
+        connected = True
+        print('Connected to Internet and GDrive')
+    except:
+        connected = False
+        print('Not connected to Internet and GDrive')
+else:
+    connected = False
 
 # Call the main screen function to get things going!
 main_screen()
