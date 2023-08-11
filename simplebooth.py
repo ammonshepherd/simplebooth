@@ -6,7 +6,7 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-from tkinter import tk
+import tkinter as tk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
 from gpiozero import LED, Button
