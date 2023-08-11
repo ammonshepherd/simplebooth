@@ -1,6 +1,7 @@
 import time
 import random
 import textwrap
+import mimetypes
 import subprocess
 import urllib.request
 from datetime import datetime
@@ -177,22 +178,19 @@ def button_pressed():
   final_image = printable_image(booth_image)
 
   if printer_check(PRINTER_NAME):
-    # print_booth_image(final_image)
-    print("printing image")
+    print_booth_image(final_image)
 
-  # Show logo and instructions while images are created and printed
-  logo_label.grid(row=0, column=1, sticky="ew")
-  instructions_text.set("Please wait while the picture is printing.")
-  instructions_label.grid(row=1, column=1, sticky="ew")
-  # remove sleep line when QR code functionality is working
-  # time.sleep(20)
 
   # If connected to internet, upload image to Google Drive and create QR code
   if (connected):
-    print("internet connected")
-    print(booth_image)
-    # fileUrl = upload_to_gdrive(booth_image)
-    # make_qr(fileUrl)
+    fileUrl = upload_to_gdrive(booth_image)
+    if(fileUrl):
+      make_qr(fileUrl)
+  else:
+    # Show logo and instructions while images are created and printed
+    logo_label.grid(row=0, column=1, sticky="ew")
+    instructions_text.set("Please wait while the picture is printing.")
+    instructions_label.grid(row=1, column=1, sticky="ew")
 
   # And back to the main screen
   main_screen()
@@ -372,28 +370,32 @@ def has_internet(host='https://google.com'):
     return False
 
 
-def upload_to_gdrive(file_name):
+def upload_to_gdrive(file_path):
   """ Upload the photobooth image to the Google Drive folder and return the URL
   to dowload the image. """
 
   global CRED_FILE
   global FOLDER_ID
 
-  SCOPES = ['https://www.googleapis.com/auth/drive']
+  SCOPES = ['https://www.googleapis.com/auth/drive.file']
   creds = service_account.Credentials.from_service_account_file(CRED_FILE)
   scoped = creds.with_scopes(SCOPES)
+
+  file_name = Path(file_path).parts[5] + "-" + Path(file_path).name
+  mime_type = mimetypes.guess_type(file_path)
 
   try:
     service = build("drive", "v3", credentials=scoped)
 
     file_metadata = {'name': file_name, 'parents': [FOLDER_ID]}
-    media = MediaFileUpload(file_name, mimetype=mime_type, resumable=True)
-    file = service.files().create(body=file_metadata, media_body=media, fields='webViewLink').execute()
+    image_file = MediaFileUpload(file_path, mimetype=mime_type[0], resumable=True)
+    file = service.files().create(body=file_metadata, media_body=image_file, fields='webViewLink').execute()
     return file.get('webViewLink')
 
   except HttpError as error:
     print(f'Thus an error: {error}')
     print(f'Check if this app can connect to the Google Account. Does the service account key file still exist?')
+    quit()
     return None
 
 
@@ -413,6 +415,7 @@ def make_qr(fileUrl):
   instructions_label.grid(row=1, column=1, sticky="ew")
   qrImage = tk.PhotoImage(file=f'{SIMPLEPATH}/qrimage.png')
   qrLabel = tk.Label(win, image=qrImage)
+  qrLabel.config(bg="black")
   qrLabel.grid(row=0, column=1, sticky="ew")
   time.sleep(20)
   qrLabel.grid_remove()
