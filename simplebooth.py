@@ -74,7 +74,12 @@ PRINTER_NAME = "MITSUBISHI_CK60D70D707D"
 # FOLDER_ID is the ID for the folder in the tinkertank.uva Google Drive where
 # files are stored.
 CRED_FILE = 'service_account.json'
-FOLDER_ID = '1FEH74jojf7WPOYk0ILqexKMs-ezGwGnE'
+
+# simplebooth_photos
+#FOLDER_ID = '1FEH74jojf7WPOYk0ILqexKMs-ezGwGnE'
+
+# LOTL2023
+FOLDER_ID = '1jAr4lmGHtwSUDuI6jT8k9XXIIYFnb1dw'
 ##################### END CONFIG SETTINGS ############################
 
 
