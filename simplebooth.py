@@ -21,6 +21,10 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='photobooth.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
+
 
 ######################################################################
 #
@@ -49,14 +53,15 @@ NUM_PICS = 3
 
 # Messages to print at the bottom of the photobooth strip
 TOP_TEXT = ["Be the best you can, so you can do the best you can!",
-      "Do good, be good, but if you have to choose, be good.",
-      "Make it a GREAT day!",
-      "Sieze the day!",
-      "Ya'll are AWESOME!",
-      "WE GOT THIS!",
-      "BFF!",
-      "We so cool!"]
-BOTTOM_TEXT = "Scholars' Lab TinkerTank"
+       "Do good, be good, but if you have to choose, be good.",
+       "Make it a GREAT day!",
+       "Sieze the day!",
+       "Ya'll are AWESOME!",
+       "WE GOT THIS!",
+       "BFF!",
+        "We so cool!"]
+BOTTOM_TEXT = "Scholars' Lab Makerspace"
+#TOP_TEXT = ["Lighting of the Lawn 2023"]
 
 # Photo strip settings
 STRIP_BORDER = 40
@@ -134,6 +139,7 @@ camera.hflip = True
 
 def main_screen():
   """Show the main screen to get users to push the button."""
+  logging.debug('main_screen function begin')
 
   global logo_label
   global instructions_text
@@ -155,6 +161,7 @@ def button_pressed():
   """After button press, take the pictures, print pictures, and if
   available, upload pictures to Google Doc and show a QR Code. Then
   show the main screen."""
+  logging.debug("button_pressed function begin")
 
   global connected
   global logo_label
@@ -174,24 +181,30 @@ def button_pressed():
 
   # Start the camera, call the function to take pictures, and store
   # the paths to the pictures in the list
+  logging.debug("Starting picture taking process")
   camera.start_preview()
   images = take_pics(NUM_PICS)
   camera.stop_preview()
+  logging.debug("Ending picture taking process")
 
   # Make the photobooth image, and the doubled image for printing
   booth_image = make_booth_image(images)
   final_image = printable_image(booth_image)
 
   if printer_check(PRINTER_NAME):
+    logging.debug("Printer check returned true. Print the images.")
     print_booth_image(final_image)
 
 
   # If connected to internet, upload image to Google Drive and create QR code
   if (connected):
+    logging.debug("Connected to Internet, send file to GDrive")
     fileUrl = upload_to_gdrive(booth_image)
     if(fileUrl):
+      logging.debug("File uploaded to GDrive, so here's the QR code.")
       make_qr(fileUrl)
   else:
+    logging.debug("No network connection, so just display message.")
     # Show logo and instructions while images are created and printed
     logo_label.grid(row=0, column=1, sticky="ew")
     instructions_text.set("Please wait while the picture is printing.")
@@ -204,6 +217,7 @@ def button_pressed():
 def take_pics(num_pics):
   """Take the pictures and return the path to the directory where the
   photos are stored."""
+  logging.debug("take_pics function begin.")
 
   global logo_label
   global instructions_text
@@ -256,17 +270,21 @@ def take_pics(num_pics):
 
 def check_image_folder():
   """Check for base image folder. Create if it doesn't exist."""
+  logging.debug("check_image_folder function begin")
 
   if Path(BOOTH_IMAGE_PATH).exists():
+    logging.info("Folder path exists: %s", BOOTH_IMAGE_PATH)
     return True
   else:
     Path(f'{str(BOOTH_IMAGE_PATH)}').mkdir()
+    logging.warning("Folder path did not exist so it was created: %s", BOOTH_IMAGE_PATH)
     return True
 
 
 def make_booth_image(images):
   """Make photobooth image. Use images in the given path to create the
   photobooth image that will be printed."""
+  logging.debug("make_booth_image function begin")
   # Currently, the only option is the classic, three stacked images
 
   folder_path = Path(images[0]).parent
@@ -285,7 +303,9 @@ def make_booth_image(images):
   top_text = ImageDraw.Draw(booth_image)
   long_text, font1 = create_text(top_text, random_text, TOP_TEXT_HEIGHT_MIN,
                    TOP_TEXT_HEIGHT_MAX)
-  top_text.multiline_text((STRIP_BORDER, 2680), long_text, font=font1, fill=(
+  vert_centered_spacing = (TOP_TEXT_HEIGHT_MAX-get_text_lh((STRIP_BORDER, 2680), top_text, long_text, font1)[1])//2
+  print(vert_centered_spacing)
+  top_text.multiline_text((STRIP_BORDER, 2680+vert_centered_spacing), long_text, font=font1, fill=(
     35, 45, 75), spacing=20, align="center")
 
   # add the smaller text
@@ -301,6 +321,7 @@ def make_booth_image(images):
 
 def create_text(text_obj, text, height_min, height_max):
   """ Create the text under the images """
+  logging.debug("create_text function begin")
   font_size = 180
   wrapped_height = 100
   wrapped_text = ""
@@ -328,6 +349,7 @@ def create_text(text_obj, text, height_min, height_max):
 
 def get_wrap(text_obj, text, the_font):
   """ Get the number of characters to wrap the text at 1100 pixels """
+  logging.debug("get_wrap function being")
   new_text = ""
   char_count = 0
   line_length = 0
@@ -342,6 +364,7 @@ def get_wrap(text_obj, text, the_font):
 
 def get_text_lh(xy, text_obj, text, the_font):
   """ Given a wrapped text object, return the height """
+  logging.debug("get_text_lh function begin")
   left, top, right, bottom = text_obj.multiline_textbbox(
     xy, text, font=the_font)
   length = right - left
@@ -352,6 +375,7 @@ def get_text_lh(xy, text_obj, text, the_font):
 def printable_image(booth_image):
   """Make the image ready for printing. The printer needs an image that
   is a composition of two photobooth strips side-by-side."""
+  logging.debug("printable_image function begin")
 
   folder_path = Path(booth_image).parent
   img = Image.open(booth_image)
@@ -367,17 +391,21 @@ def printable_image(booth_image):
 
 def has_internet(host='https://google.com'):
   """ Check if the Pi has connection to the internet """
+  logging.debug("has_internet function begin")
 
   try:
     urllib.request.urlopen(host)
+    logging.info("Internet connection established.")
     return True
   except:
+    logging.warning("No internet connection")
     return False
 
 
 def upload_to_gdrive(file_path):
   """ Upload the photobooth image to the Google Drive folder and return the URL
   to dowload the image. """
+  logging.debug("upload_to_gdrive function begin")
 
   global CRED_FILE
   global FOLDER_ID
@@ -390,6 +418,7 @@ def upload_to_gdrive(file_path):
   mime_type = mimetypes.guess_type(file_path)
 
   try:
+    logging.info("Uploading file %s to GDrive.", file_name)
     service = build("drive", "v3", credentials=scoped)
 
     file_metadata = {'name': file_name, 'parents': [FOLDER_ID]}
@@ -398,6 +427,7 @@ def upload_to_gdrive(file_path):
     return file.get('webViewLink')
 
   except HttpError as error:
+    logging.warning("Can't connect to GDrive or upload the file. Error: %s", error)
     print(f'Thus an error: {error}')
     print(f'Check if this app can connect to the Google Account. Does the service account key file still exist?')
     quit()
@@ -406,6 +436,7 @@ def upload_to_gdrive(file_path):
 
 def make_qr(fileUrl):
   """ Create a QR code of the URL to download the image """
+  logging.debug("make_qr function begin")
 
   global logo_label
   global instructions_text
@@ -429,18 +460,26 @@ def make_qr(fileUrl):
 # - TODO: look into using pycups library
 def print_booth_image(printable_image):
   """ Send the booth image to the printer """
-
-  output = subprocess.run(["lp", "-d", PRINTER_NAME, printable_image], capture_output=True)
+  logging.debug("print_booth_image function begin")
+  try:
+    logging.info("Pringing image file.")
+    output = subprocess.run(["lp", "-d", PRINTER_NAME, printable_image], capture_output=True)
+  except:
+    logging.warning("Image failed to print.")
+    print(output)
   return True
 
 
 def printer_check(printer_name):
   """ Check if the printer is connected """
+  logging.debug("printer_check function begin. printer_name = %s", printer_name)
 
   attached_printers = subprocess.run(['lpstat', '-p'], capture_output=True)
   if printer_name in attached_printers.stdout.decode('utf-8'):
+    logging.info("Connected to %s", printer_name)
     return True
   else:
+    logging.warning("Could not connect to printer: %s", printer_name)
     return False
 
 
