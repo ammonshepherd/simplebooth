@@ -53,10 +53,8 @@ NUM_PICS = 3
 
 # Messages to print at the bottom of the photobooth strip
 TOP_TEXT = ["Be the best you can, so you can do the best you can!",
-       "Do good, be good, but if you have to choose, be good.",
        "Make it a GREAT day!",
        "Sieze the day!",
-       "Ya'll are AWESOME!",
        "WE GOT THIS!",
        "BFF!",
         "We so cool!"]
@@ -260,7 +258,7 @@ def take_pics(num_pics):
     camera.start_preview()
     # image size based on three images for a classic photostrip
     camera.capture(f'{folder_path}/{timestamp}_{i}.jpg',
-             resize=(1120, 840))
+             resize=(1080, 840))
     image_list.append(f'{folder_path}/{timestamp}_{i}.jpg')
 
   # return the background to black
@@ -292,14 +290,22 @@ def make_booth_image(images):
     'RGB', (STRIP_WIDTH, STRIP_LENGTH), (255, 255, 255))
   # place the first image 40 pixels in from the top left corner
   x, y = STRIP_BORDER, STRIP_BORDER
+  y += 80
   for img in images:
     new_img = Image.open(img)
     booth_image.paste(new_img, (x, y))
     # add 880 pixels to where the bottom of each image is placed
     y = y + 880
 
+  #UVA Logo instead of Top text
+  logo = Image.open("mfmc (2) (3).jpg")
+  # place the first image 40 pixels in from the top left corner
+  x, y = STRIP_BORDER, STRIP_LENGTH-STRIP_BORDER-840
+  booth_image.paste(logo, (x, y))
+
+
   # Top text
-  random_text = random.choice(TOP_TEXT)
+  '''random_text = random.choice(TOP_TEXT)
   top_text = ImageDraw.Draw(booth_image)
   long_text, font1 = create_text(top_text, random_text, TOP_TEXT_HEIGHT_MIN,
                    TOP_TEXT_HEIGHT_MAX)
@@ -313,8 +319,9 @@ def make_booth_image(images):
   font2 = ImageFont.truetype(
     "/usr/share/fonts/truetype/freefont/FreeSans.ttf", 90)
   bottom_text.multiline_text((40, 3420), BOTTOM_TEXT, font=font2,
-                 fill=(248, 76, 30), align="center")
+                 fill=(248, 76, 30), align="center") '''
 
+  
   booth_image.save(f'{folder_path}/booth_image.jpg')
   return f'{folder_path}/booth_image.jpg'
 
@@ -349,7 +356,8 @@ def create_text(text_obj, text, height_min, height_max):
 
 def get_wrap(text_obj, text, the_font):
   """ Get the number of characters to wrap the text at 1100 pixels """
-  logging.info("get_wrap function being")
+  logging.info("get_wrap function begin")
+  logging.info(text)
   new_text = ""
   char_count = 0
   line_length = 0
@@ -365,6 +373,7 @@ def get_wrap(text_obj, text, the_font):
 def get_text_lh(xy, text_obj, text, the_font):
   """ Given a wrapped text object, return the height """
   logging.info("get_text_lh function begin")
+  logging.info(text)
   left, top, right, bottom = text_obj.multiline_textbbox(
     xy, text, font=the_font)
   length = right - left
