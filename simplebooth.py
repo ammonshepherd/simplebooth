@@ -23,7 +23,7 @@ from googleapiclient.http import MediaFileUpload
 
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='photobooth.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt="%Y-%m-%d %H:%M",)
+logging.basicConfig(filename='photobooth.log', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt="%Y-%m-%d %H:%M",)
 
 
 ######################################################################
@@ -52,7 +52,7 @@ LED_PIN = 17
 NUM_PICS = 3
 
 # Messages to print at the bottom of the photobooth strip
-TOP_TEXT = ["Be the best you can, so you can do the best you can!",
+TOP_TEXT = [
        "Make it a GREAT day!",
        "Sieze the day!",
        "WE GOT THIS!",
@@ -298,7 +298,7 @@ def make_booth_image(images):
     y = y + 880
 
   #UVA Logo instead of Top text
-  logo = Image.open("mfmc (2) (3).jpg")
+  logo = Image.open("UVALogo.png")
   # place the first image 40 pixels in from the top left corner
   x, y = STRIP_BORDER, STRIP_LENGTH-STRIP_BORDER-840
   booth_image.paste(logo, (x, y))
@@ -471,7 +471,7 @@ def print_booth_image(printable_image):
   """ Send the booth image to the printer """
   logging.info("print_booth_image function begin")
   try:
-    logging.info("Pringing image file.")
+    logging.info("Printing image file.")
     output = subprocess.run(["lp", "-d", PRINTER_NAME, printable_image], capture_output=True)
   except:
     logging.warning("Image failed to print.")
