@@ -5,7 +5,7 @@ Mainly because I couldn't get the other options to work nicely with my printer.
 
 
 # Other options
-- pibooth
+- pibooth: https://documentation.pibooth.org/en/latest/
 - https://www.hackster.io/ericBcreator/photo-booth-powered-by-a-raspberry-pi-23b491
 - https://github.com/sabat54i/photoboothdiy
 
