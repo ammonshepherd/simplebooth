@@ -52,14 +52,16 @@ LED_PIN = 17
 NUM_PICS = 3
 
 # Messages to print at the bottom of the photobooth strip
-TOP_TEXT = [
+LOGO = 'UVA-logo.jpg'
+'''TOP_TEXT = [
        "Make it a GREAT day!",
        "Sieze the day!",
        "WE GOT THIS!",
        "BFF!",
         "We so cool!"]
-BOTTOM_TEXT = "Scholars' Lab Makerspace"
-#TOP_TEXT = ["Lighting of the Lawn 2023"]
+        '''
+BOTTOM_TEXT = "Scholars' Lab Makerspace 2026"
+# BOTTOM_TEXT = "2026"
 
 # Photo strip settings
 STRIP_BORDER = 40
@@ -99,8 +101,7 @@ win.configure(bg="black")
 
 # Create the instructions variable and label
 instructions_text = tk.StringVar()
-instructions_label = tk.Label(win, textvariable=instructions_text, font=(
-  "Arial", 85), wraplength=screen_width, bg="black", fg="white")
+instructions_label = tk.Label(win, textvariable=instructions_text, font=("Arial", 85), wraplength=screen_width, bg="black", fg="white")
 # Create the logo label
 booth_icon = Image.open("simplebooth-icon.png")
 pic = ImageTk.PhotoImage(booth_icon)
@@ -191,7 +192,7 @@ def button_pressed():
 
   if printer_check(PRINTER_NAME):
     logging.info("Printer check returned true. Print the images.")
-    print_booth_image(final_image)
+    # print_booth_image(final_image)
 
 
   # If connected to internet, upload image to Google Drive and create QR code
@@ -257,8 +258,8 @@ def take_pics(num_pics):
     camera.stop_preview()
     camera.start_preview()
     # image size based on three images for a classic photostrip
-    camera.capture(f'{folder_path}/{timestamp}_{i}.jpg',
-             resize=(1080, 840))
+    # camera.capture(f'{folder_path}/{timestamp}_{i}.jpg', resize=(1080, 840))
+    camera.capture(f'{folder_path}/{timestamp}_{i}.jpg', resize=(1100, 640))
     image_list.append(f'{folder_path}/{timestamp}_{i}.jpg')
 
   # return the background to black
@@ -289,7 +290,7 @@ def make_booth_image(images):
   booth_image = Image.new(
     'RGB', (STRIP_WIDTH, STRIP_LENGTH), (255, 255, 255))
   # place the first image 40 pixels in from the top left corner
-  x, y = STRIP_BORDER, STRIP_BORDER
+  x, y = STRIP_BORDER + 10, STRIP_BORDER
   y += 80
   for img in images:
     new_img = Image.open(img)
@@ -297,31 +298,26 @@ def make_booth_image(images):
     # add 880 pixels to where the bottom of each image is placed
     y = y + 880
 
-  #UVA Logo instead of Top text
-  logo = Image.open("UVALogo.png")
+  #Logo instead of Top text
+  logo = Image.open(LOGO)
   # place the first image 40 pixels in from the top left corner
-  x, y = STRIP_BORDER, STRIP_LENGTH-STRIP_BORDER-840
+  x, y = STRIP_BORDER + 200, STRIP_LENGTH-STRIP_BORDER-940
   booth_image.paste(logo, (x, y))
 
 
   # Top text
   '''random_text = random.choice(TOP_TEXT)
   top_text = ImageDraw.Draw(booth_image)
-  long_text, font1 = create_text(top_text, random_text, TOP_TEXT_HEIGHT_MIN,
-                   TOP_TEXT_HEIGHT_MAX)
+  long_text, font1 = create_text(top_text, random_text, TOP_TEXT_HEIGHT_MIN, TOP_TEXT_HEIGHT_MAX)
   vert_centered_spacing = (TOP_TEXT_HEIGHT_MAX-get_text_lh((STRIP_BORDER, 2680), top_text, long_text, font1)[1])//2
   print(vert_centered_spacing)
-  top_text.multiline_text((STRIP_BORDER, 2680+vert_centered_spacing), long_text, font=font1, fill=(
-    35, 45, 75), spacing=20, align="center")
-
+  top_text.multiline_text((STRIP_BORDER, 2680+vert_centered_spacing), long_text, font=font1, fill=(35, 45, 75), spacing=20, align="center")
+'''
   # add the smaller text
   bottom_text = ImageDraw.Draw(booth_image)
-  font2 = ImageFont.truetype(
-    "/usr/share/fonts/truetype/freefont/FreeSans.ttf", 90)
-  bottom_text.multiline_text((40, 3420), BOTTOM_TEXT, font=font2,
-                 fill=(248, 76, 30), align="center") '''
+  font2 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/Bangers-Regular.ttf", 100)
+  bottom_text.multiline_text((20, 3320), BOTTOM_TEXT, font=font2, fill=(35, 45, 75), align="center")
 
-  
   booth_image.save(f'{folder_path}/booth_image.jpg')
   return f'{folder_path}/booth_image.jpg'
 
@@ -333,17 +329,14 @@ def create_text(text_obj, text, height_min, height_max):
   wrapped_height = 100
   wrapped_text = ""
 
-  font1 = ImageFont.truetype(
-    "/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
+  font1 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
   wrap_size = get_wrap(text_obj, text, font1)
 
   while (wrapped_height < height_min) or (wrapped_height > height_max):
-    font1 = ImageFont.truetype(
-      "/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
+    font1 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", font_size)
     wrap_size = get_wrap(text_obj, text, font1)
     wrapped_text = textwrap.fill(text, wrap_size)
-    wrapped_length, wrapped_height = get_text_lh(
-      (STRIP_BORDER, 2680), text_obj, wrapped_text, font1)
+    wrapped_length, wrapped_height = get_text_lh((STRIP_BORDER, 2680), text_obj, wrapped_text, font1)
     if wrapped_length > TEXT_LENGTH_MAX:
       break
     if wrapped_height > height_max:
@@ -374,8 +367,7 @@ def get_text_lh(xy, text_obj, text, the_font):
   """ Given a wrapped text object, return the height """
   logging.info("get_text_lh function begin")
   logging.info(text)
-  left, top, right, bottom = text_obj.multiline_textbbox(
-    xy, text, font=the_font)
+  left, top, right, bottom = text_obj.multiline_textbbox(xy, text, font=the_font)
   length = right - left
   height = bottom - top
   return length, height
@@ -455,8 +447,7 @@ def make_qr(fileUrl):
   qr = qrcode.make(fileUrl)
   qr.save(f'{SIMPLEPATH}/qrimage.png')
   logo_label.grid_remove()
-  instructions_text.set(
-    "While your photo is printing, scan this code to download your image!")
+  instructions_text.set("While your photo is printing, scan this code to download your image!")
   instructions_label.grid(row=1, column=1, sticky="ew")
   qrImage = tk.PhotoImage(file=f'{SIMPLEPATH}/qrimage.png')
   qrLabel = tk.Label(win, image=qrImage)
