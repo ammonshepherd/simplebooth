@@ -192,7 +192,7 @@ def button_pressed():
 
   if printer_check(PRINTER_NAME):
     logging.info("Printer check returned true. Print the images.")
-    # print_booth_image(final_image)
+    print_booth_image(final_image)
 
 
   # If connected to internet, upload image to Google Drive and create QR code
