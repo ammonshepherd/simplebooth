@@ -15,6 +15,10 @@ from picamera import PiCamera
 
 import qrcode
 
+# Photo strip layout, logo and bottom text live in strip.py
+from strip import make_booth_image, printable_image
+from strip import STRIP_BORDER, STRIP_WIDTH, STRIP_LENGTH, TEXT_LENGTH_MAX
+
 from google.oauth2 import service_account
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -51,8 +55,7 @@ LED_PIN = 17
 # in the future...
 NUM_PICS = 3
 
-# Messages to print at the bottom of the photobooth strip
-LOGO = 'UVA-logo.jpg'
+# The logo and text at the bottom of the photobooth strip are set in strip.py
 '''TOP_TEXT = [
        "Make it a GREAT day!",
        "Sieze the day!",
@@ -60,15 +63,7 @@ LOGO = 'UVA-logo.jpg'
        "BFF!",
         "We so cool!"]
         '''
-BOTTOM_TEXT = "Scholars' Lab Makerspace 2026"
-# BOTTOM_TEXT = "2026"
-
-# Photo strip settings
-STRIP_BORDER = 40
-STRIP_WIDTH = 1200
-STRIP_LENGTH = 3600
 # Top text settings
-TEXT_LENGTH_MAX = STRIP_WIDTH - (STRIP_BORDER * 2) - 20
 TOP_TEXT_HEIGHT_MIN = 630
 TOP_TEXT_HEIGHT_MAX = 680
 
@@ -280,48 +275,6 @@ def check_image_folder():
     return True
 
 
-def make_booth_image(images):
-  """Make photobooth image. Use images in the given path to create the
-  photobooth image that will be printed."""
-  logging.info("make_booth_image function begin")
-  # Currently, the only option is the classic, three stacked images
-
-  folder_path = Path(images[0]).parent
-  booth_image = Image.new(
-    'RGB', (STRIP_WIDTH, STRIP_LENGTH), (255, 255, 255))
-  # place the first image 40 pixels in from the top left corner
-  x, y = STRIP_BORDER + 10, STRIP_BORDER
-  y += 80
-  for img in images:
-    new_img = Image.open(img)
-    booth_image.paste(new_img, (x, y))
-    # add 880 pixels to where the bottom of each image is placed
-    y = y + 880
-
-  #Logo instead of Top text
-  logo = Image.open(LOGO)
-  # place the first image 40 pixels in from the top left corner
-  x, y = STRIP_BORDER + 200, STRIP_LENGTH-STRIP_BORDER-940
-  booth_image.paste(logo, (x, y))
-
-
-  # Top text
-  '''random_text = random.choice(TOP_TEXT)
-  top_text = ImageDraw.Draw(booth_image)
-  long_text, font1 = create_text(top_text, random_text, TOP_TEXT_HEIGHT_MIN, TOP_TEXT_HEIGHT_MAX)
-  vert_centered_spacing = (TOP_TEXT_HEIGHT_MAX-get_text_lh((STRIP_BORDER, 2680), top_text, long_text, font1)[1])//2
-  print(vert_centered_spacing)
-  top_text.multiline_text((STRIP_BORDER, 2680+vert_centered_spacing), long_text, font=font1, fill=(35, 45, 75), spacing=20, align="center")
-'''
-  # add the smaller text
-  bottom_text = ImageDraw.Draw(booth_image)
-  font2 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/Bangers-Regular.ttf", 100)
-  bottom_text.multiline_text((20, 3320), BOTTOM_TEXT, font=font2, fill=(35, 45, 75), align="center")
-
-  booth_image.save(f'{folder_path}/booth_image.jpg')
-  return f'{folder_path}/booth_image.jpg'
-
-
 def create_text(text_obj, text, height_min, height_max):
   """ Create the text under the images """
   logging.info("create_text function begin")
@@ -371,23 +324,6 @@ def get_text_lh(xy, text_obj, text, the_font):
   length = right - left
   height = bottom - top
   return length, height
-
-
-def printable_image(booth_image):
-  """Make the image ready for printing. The printer needs an image that
-  is a composition of two photobooth strips side-by-side."""
-  logging.info("printable_image function begin")
-
-  folder_path = Path(booth_image).parent
-  img = Image.open(booth_image)
-  new_img = Image.new('RGB', (2*img.size[0], img.size[1]), (250, 250, 250))
-  new_img.paste(img, (0, 0))
-  new_img.paste(img, (img.size[0], 0))
-  new_name = Path(booth_image).stem
-  new_img.save(f'{folder_path}/{new_name}_double.jpg')
-  # return full path and file name
-  print_image = f'{folder_path}/{new_name}_double.jpg'
-  return print_image
 
 
 def has_internet(host='https://google.com'):

@@ -2,3 +2,5 @@
 *.json
 *.yaml
 qrimage.png
+__pycache__/
+preview/
