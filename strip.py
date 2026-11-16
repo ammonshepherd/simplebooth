@@ -14,16 +14,15 @@ HERE = Path(__file__).resolve().parent
 ######################################################################
 #
 #     EVENT SETTINGS
-#     change these for each event
+#     Defaults for the Scholars' Lab booth. For an event, make a script like
+#     brown.py that changes these before starting the booth.
 #######################################################################
 # Logo printed under the photos. Any size or shape: it is scaled to fit the
 # logo area and centered. PNGs with a transparent background work best.
-LOGO = 'Brown-College-standin-logo.png'
-# LOGO = 'UVA-logo.jpg'
+LOGO = 'UVA-logo.jpg'
 
 # Text at the very bottom of the strip. Use \n to break it into lines.
-BOTTOM_TEXT = "Brown College\nFall Semi-Formal 2026"
-# BOTTOM_TEXT = "Scholars' Lab Makerspace 2026"
+BOTTOM_TEXT = "Scholars' Lab Makerspace 2026"
 TEXT_COLOR = (35, 45, 75)
 BOTTOM_FONT_SIZE = 100
 BOTTOM_FONT = "/usr/share/fonts/truetype/freefont/Bangers-Regular.ttf"
