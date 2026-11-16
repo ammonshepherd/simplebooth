@@ -45,11 +45,14 @@ TEXT_LENGTH_MAX = STRIP_WIDTH - (STRIP_BORDER * 2) - 20
 LOGO_TOP = STRIP_LENGTH - STRIP_BORDER - 940
 LOGO_MAX_WIDTH = 900
 LOGO_GAP = 10                   # space between the logo and the text
+# Space between the bottom of the text and the strip border. The printer
+# trims a little off the bottom, so this is ~1mm (24px) more than the original 20.
+BOTTOM_TEXT_MARGIN = 44
 
 # Nudge everything on the printed sheet to correct for the printer not
 # centering the print. Positive X moves right, positive Y moves down (pixels).
 # Only affects the printed (double) image, not the strip uploaded to Drive.
-PRINT_OFFSET_X = 0
+PRINT_OFFSET_X = -24   # measured: cut line printed ~1mm right of center
 PRINT_OFFSET_Y = 0
 
 # Fonts to try if BOTTOM_FONT isn't installed (e.g. previewing off the Pi)
@@ -117,7 +120,7 @@ def build_strip(images, logo=None, bottom_text=None):
   draw = ImageDraw.Draw(booth_image)
   font, (left, top, right, bottom) = fit_bottom_text(draw, bottom_text)
   text_x = (STRIP_WIDTH - (right - left)) // 2 - left
-  text_y = STRIP_LENGTH - STRIP_BORDER - 20 - bottom
+  text_y = STRIP_LENGTH - STRIP_BORDER - BOTTOM_TEXT_MARGIN - bottom
   draw.multiline_text((text_x, text_y), bottom_text, font=font, fill=TEXT_COLOR, spacing=10, align="center")
 
   # Logo fills the space between LOGO_TOP and the top of the text
