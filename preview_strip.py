@@ -75,7 +75,8 @@ def main():
 
   sheet = strip.build_print_sheet(booth)
   d = ImageDraw.Draw(sheet)
-  x = strip.STRIP_WIDTH
+  # Where the printer actually cuts: the sheet center, moved by the print offset
+  x = strip.STRIP_WIDTH + strip.PRINT_OFFSET_X
   for y in range(0, sheet.height, 60):
     d.line([(x, y), (x, y + 30)], fill=(220, 0, 0), width=4)
   sheet.save(OUT / "print_sheet.png")

@@ -46,8 +46,8 @@ LOGO_TOP = STRIP_LENGTH - STRIP_BORDER - 940
 LOGO_MAX_WIDTH = 900
 LOGO_GAP = 10                   # space between the logo and the text
 # Space between the bottom of the text and the strip border. The printer
-# trims a little off the bottom, so this is ~1mm (24px) more than the original 20.
-BOTTOM_TEXT_MARGIN = 44
+# trims a little off the bottom, so this is ~2mm (48px) more than the original 20.
+BOTTOM_TEXT_MARGIN = 68
 
 # Nudge everything on the printed sheet to correct for the printer not
 # centering the print. Positive X moves right, positive Y moves down (pixels).
